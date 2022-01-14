@@ -389,7 +389,7 @@ def main(args=None):
 
     parameters['host'] = carla_bridge.get_param('host', 'localhost')
     parameters['port'] = carla_bridge.get_param('port', 2000)
-    parameters['timeout'] = carla_bridge.get_param('timeout', 2)
+    parameters['timeout'] = carla_bridge.get_param('timeout', 10)
     parameters['passive'] = carla_bridge.get_param('passive', False)
     parameters['synchronous_mode'] = carla_bridge.get_param('synchronous_mode', True)
     parameters['synchronous_mode_wait_for_vehicle_control_command'] = carla_bridge.get_param(
@@ -413,7 +413,7 @@ def main(args=None):
 
         # check carla version
         dist = pkg_resources.get_distribution("carla")
-        if LooseVersion(dist.version) != LooseVersion(CarlaRosBridge.CARLA_VERSION):
+        if LooseVersion(dist.version) <= LooseVersion(CarlaRosBridge.CARLA_VERSION):
             carla_bridge.logfatal("CARLA python module version {} required. Found: {}".format(
                 CarlaRosBridge.CARLA_VERSION, dist.version))
             sys.exit(1)
