@@ -413,7 +413,7 @@ def main(args=None):
 
         # check carla version
         dist = pkg_resources.get_distribution("carla")
-        if LooseVersion(dist.version) <= LooseVersion(CarlaRosBridge.CARLA_VERSION):
+        if LooseVersion(dist.version) < LooseVersion(CarlaRosBridge.CARLA_VERSION):
             carla_bridge.logfatal("CARLA python module version {} required. Found: {}".format(
                 CarlaRosBridge.CARLA_VERSION, dist.version))
             sys.exit(1)
