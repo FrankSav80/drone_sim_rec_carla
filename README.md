@@ -55,7 +55,12 @@ If everything went as expected, you should be able to test your container with t
 $ ros2 launch carla_ros_bridge carla_ros_bridge_with_example_ego_vehicle.launch.py
 ```
 
-When you need to open more terminals inside the same container (considering the name is carla-ros2-8589d9bd2d):
+When you need to open more terminals inside the same container (considering the name is `carla-ros2-8589d9bd2d`):
 ```
 $ docker exec -it carla-ros2-8589d9bd2d bash
+```
+
+And if you just want to execute something (e.g. `ros2 topic list`):
+```
+$ docker exec -t carla-ros2-8589d9bd2d bash -i -c "ros2 topic list"
 ```
