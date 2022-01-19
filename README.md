@@ -9,7 +9,7 @@
 
 ![rviz setup](./docs/images/ad_demo.png "AD Demo")
 
-**This version requires CARLA 0.9.12**
+**This version requires CARLA 0.9.13**
 
 ## Features
 
@@ -21,3 +21,36 @@
 ## Getting started and documentation
 
 Installation instructions and further documentation of the ROS bridge and additional packages are found [__here__](https://carla.readthedocs.io/projects/ros-bridge/en/latest/).
+
+## My modifications
+I modified this repo to allow you to use hostnames (avahi) and to allow you to download just one script to use together with a headless CARLA server from another docker image.  
+It's expected that you are running linux and you have docker and nvidia-docker2 installed (and working).
+
+Download the script to launch the headless server:
+```
+$ wget https://raw.githubusercontent.com/ricardodeazambuja/carla-simulator-python/main/launch_simulator_docker.sh
+```
+And launch it:
+```
+$ source launch_simulator_docker.sh
+```
+
+Now, in a new terminal, download this second script:
+```
+$ wget https://raw.githubusercontent.com/ricardodeazambuja/carla-ros/master/docker/build_ros2-galactic.sh
+```
+
+Build your image (it will download another script after that):
+```
+$ source build_ros2-galactic.sh
+```
+
+And finally launch the CARLA ROS2 stuff :)
+```
+$ source run_ros2-galactic.sh
+```
+
+If everything went as expected, you should be able to test your container with this:
+```
+$ ros2 launch carla_ros_bridge carla_ros_bridge_with_example_ego_vehicle.launch.py
+```
