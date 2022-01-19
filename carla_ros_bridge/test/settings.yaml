@@ -3,7 +3,7 @@ ego_vehicle_node:
     use_sim_time: true
     carla:
       # the network connection for the python connection to CARLA
-      host: localhost
+      host: carla-container.local
       port: 2000
       # vehicles
       vehicle_filter: vehicle.*

@@ -44,6 +44,8 @@ __2.__ Set up the ROS environment:
 __3.__ Install the ROS dependencies:
 
 ```sh
+    sudo apt update
+    
     rosdep update
     rosdep install --from-paths src --ignore-src -r
 ```
