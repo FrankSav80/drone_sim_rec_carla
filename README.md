@@ -26,21 +26,24 @@ Installation instructions and further documentation of the ROS bridge and additi
 I modified this repo to allow you to use hostnames (avahi) and to allow you to download just one script to use together with a headless CARLA server from another docker image.  
 It's expected that you are running linux and you have docker and nvidia-docker2 installed (and working).
 
+### CARLA headless server
 Download the script to launch the headless server:
 ```
 $ wget https://raw.githubusercontent.com/ricardodeazambuja/carla-simulator-python/main/launch_simulator_docker.sh
 ```
-And launch it:
+
+Don't forget to launch it before you try any of the examples:
 ```
 $ source launch_simulator_docker.sh
 ```
 
-Now, in a new terminal, download this second script:
+### CARLA rosbridge container
+Download this second script for the ROS2 container:
 ```
 $ wget https://raw.githubusercontent.com/ricardodeazambuja/carla-ros/master/docker/build_ros2-galactic.sh
 ```
 
-Build your image (it will download another script after that):
+Build your image (it will download the script `run_ros2-galactic.sh` after that):
 ```
 $ source build_ros2-galactic.sh
 ```
@@ -50,7 +53,8 @@ And finally launch the CARLA ROS2 stuff :)
 $ source run_ros2-galactic.sh
 ```
 
-If everything went as expected, you should be able to test your container with this:
+### Using it
+If everything went as expected, and you started the CARLA headless server on a different terminal, you should be able to test your container with this:
 ```
 $ ros2 launch carla_ros_bridge carla_ros_bridge_with_example_ego_vehicle.launch.py
 ```
