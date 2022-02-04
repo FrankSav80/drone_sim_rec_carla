@@ -25,6 +25,7 @@ from carla_ros_bridge.actor_control import ActorControl
 from carla_ros_bridge.actor_list_sensor import ActorListSensor
 from carla_ros_bridge.camera import Camera, RgbCamera, DepthCamera, SemanticSegmentationCamera, DVSCamera
 from carla_ros_bridge.collision_sensor import CollisionSensor
+from carla_ros_bridge.obstacle_detection_sensor import ObstacleDetection
 from carla_ros_bridge.ego_vehicle import EgoVehicle
 from carla_ros_bridge.gnss import Gnss
 from carla_ros_bridge.imu import ImuSensor
@@ -409,6 +410,9 @@ class ActorFactory(object):
                                   carla_actor, self.sync_mode)
             elif carla_actor.type_id.startswith("sensor.other.collision"):
                 actor = CollisionSensor(uid, name, parent, spawn_pose,
+                                        self.node, carla_actor, self.sync_mode)
+            elif carla_actor.type_id.startswith("sensor.other.obstacle"):
+                actor = ObstacleDetection(uid, name, parent, spawn_pose,
                                         self.node, carla_actor, self.sync_mode)
             elif carla_actor.type_id.startswith("sensor.other.rss"):
                 actor = RssSensor(uid, name, parent, spawn_pose, self.node,
