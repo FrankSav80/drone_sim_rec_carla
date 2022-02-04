@@ -1,3 +1,6 @@
 [submodule "astuff_sensor_msgs"]
 	path = astuff_sensor_msgs
 	url = https://github.com/astuff/astuff_sensor_msgs.git
+[submodule "carla_msgs"]
+	path = carla_msgs
+	url = git@github.com:ricardodeazambuja/ros-carla-msgs.git
