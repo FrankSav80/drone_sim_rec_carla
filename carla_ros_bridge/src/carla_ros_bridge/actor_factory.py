@@ -99,6 +99,7 @@ class ActorFactory(object):
         """
         update the available actors
         """
+
         # The carla.World.get_actors() method does not return actors that has been spawned in the same frame.
         # This is a known bug and will be fixed in future release of CARLA.
         current_actors = set([actor.id for actor in self.world.get_actors()])
@@ -109,9 +110,10 @@ class ActorFactory(object):
         # Create/destroy actors not managed by the bridge. 
         self.lock.acquire()
         for actor_id in spawned_actors:
-            carla_actor = self.world.get_actor(actor_id)
-            if self.node.parameters["register_all_sensors"] or not isinstance(carla_actor, carla.Sensor):
-                self._create_object_from_actor(carla_actor)
+            if actor_id not in self._known_actor_ids:
+                carla_actor = self.world.get_actor(actor_id)
+                if self.node.parameters["register_all_sensors"] or not isinstance(carla_actor, carla.Sensor):
+                    self._create_object_from_actor(carla_actor)
 
         for actor_id in destroyed_actors:
             self._destroy_object(actor_id, delete_actor=False)
@@ -125,6 +127,7 @@ class ActorFactory(object):
 
                 if task_type == ActorFactory.TaskType.SPAWN_ACTOR and not self.node.shutdown.is_set():
                     carla_actor = self.world.get_actor(actor_id)
+                    # self.node.logwarn(f"SPAWN: {actor_id}: {req}")
                     self._create_object_from_actor(carla_actor, req)
                 elif task_type == ActorFactory.TaskType.SPAWN_PSEUDO_ACTOR and not self.node.shutdown.is_set():
                     self._create_object(actor_id, req.type, req.id, req.attach_to, req.transform)
@@ -219,25 +222,27 @@ class ActorFactory(object):
             if attach_to is None:
                 raise IndexError("Parent actor {} not found".format(req.attach_to))
 
+        # self.node.logwarn(f"{req.type}: {transform}")
         carla_actor = self.world.spawn_actor(blueprint, transform, attach_to)
         return carla_actor.id
 
     def _create_object_from_actor(self, carla_actor, req=None):
         """
-        create a object for a given carla actor
+        create an object for a given carla actor
         Creates also the object for its parent, if not yet existing
         """
         parent = None
         # the transform relative to the map
-        relative_transform = trans.carla_transform_to_ros_pose(carla_actor.get_transform())
+        if req:
+            relative_transform = req.transform
+        else:
+            relative_transform = trans.carla_transform_to_ros_pose(carla_actor.get_transform())
         if carla_actor.parent:
             if carla_actor.parent.id in self.actors:
                 parent = self.actors[carla_actor.parent.id]
             else:
                 parent = self._create_object_from_actor(carla_actor.parent)
-            if req is not None:
-                relative_transform = req.transform
-            else:
+            if not req:
                 # calculate relative transform to the parent
                 actor_transform_matrix = trans.ros_pose_to_transform_matrix(relative_transform)
                 parent_transform_matrix = trans.ros_pose_to_transform_matrix(
@@ -247,7 +252,7 @@ class ActorFactory(object):
                 relative_transform = trans.transform_matrix_to_ros_pose(relative_transform_matrix)
 
         parent_id = 0
-        if parent is not None:
+        if parent:
             parent_id = parent.uid
 
         name = carla_actor.attributes.get("role_name", "")
@@ -424,5 +429,6 @@ class ActorFactory(object):
 
         self.actors[actor.uid] = actor
         self.node.loginfo("Created {}(id={})".format(actor.__class__.__name__, actor.uid))
+        # self.node.logwarn(f"{uid}, {type_id}, {name}, {attach_to}, {spawn_pose}")
 
         return actor
