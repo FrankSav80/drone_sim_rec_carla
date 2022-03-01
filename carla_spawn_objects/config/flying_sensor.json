@@ -2,10 +2,6 @@
     "objects": 
     [    
         {
-            "type": "sensor.pseudo.traffic_lights",
-            "id": "traffic_lights"
-        },
-        {
             "type": "sensor.pseudo.objects",
             "id": "objects"
         },
@@ -16,10 +12,6 @@
         {
             "type": "sensor.pseudo.markers",
             "id": "markers"
-        },
-        {
-            "type": "sensor.pseudo.opendrive_map",
-            "id": "map"
         },
         {
             "type": "sensor.other.imu",
@@ -46,6 +38,23 @@
                     "image_size_x": 800,
                     "image_size_y": 600,
                     "fov": 90.0
+                },
+                {
+                    "type": "sensor.camera.depth",
+                    "id": "depth_front",
+                    "spawn_point": {"x": 0.0, "y": 0.0, "z": 0.0, "roll": 0.0, "pitch": 0.0, "yaw": 0.0},
+                    "fov": 90.0,
+                    "image_size_x": 400,
+                    "image_size_y": 70
+                },
+                {
+                    "type": "sensor.other.obstacle",
+                    "id": "obstacle_detection",
+                    "spawn_point": {"x": 0.0, "y": 0.0, "z": 0.0, "roll": 0.0, "pitch": 0.0, "yaw": 0.0},
+                    "distance": 5.0,
+                    "hit_radius": 0.5,
+                    "only_dynamics": false,
+                    "debug_linetrace": true
                 },
                 {
                     "type": "actor.pseudo.control",
