@@ -34,9 +34,10 @@ from carla_ros_bridge.ego_vehicle import EgoVehicle
 from carla_ros_bridge.world_info import WorldInfo
 
 from carla_msgs.msg import CarlaControl, CarlaWeatherParameters
-from carla_msgs.srv import SpawnObject, DestroyObject, GetBlueprints
+from carla_msgs.srv import SpawnObject, DestroyObject, GetBlueprints, SpawnPoints
 from rosgraph_msgs.msg import Clock
 
+from geometry_msgs.msg import Vector3
 
 class CarlaRosBridge(CompatibleNode):
 
@@ -156,6 +157,9 @@ class CarlaRosBridge(CompatibleNode):
         self.get_blueprints_service = self.new_service(GetBlueprints, "/carla/get_blueprints",
                                                        self.get_blueprints, callback_group=self.callback_group)
 
+        self.get_spawn_points_service = self.new_service(SpawnPoints, "/carla/get_spawn_points",
+                                                         self.get_spawn_points, callback_group=self.callback_group)
+
         self.carla_weather_subscriber = \
             self.new_subscription(CarlaWeatherParameters, "/carla/weather_control",
                                   self.on_weather_changed, qos_profile=10, callback_group=self.callback_group)
@@ -196,6 +200,20 @@ class CarlaRosBridge(CompatibleNode):
             bp.id for bp in self.carla_world.get_blueprint_library().filter(bp_filter)]
         response.blueprints.extend(self.actor_factory.get_pseudo_sensor_types())
         response.blueprints.sort()
+        return response
+
+    def get_spawn_points(self, req, response=None):
+        response = roscomp.get_service_response(SpawnPoints)
+
+        spawn_points = []
+        for sp in self.carla_world.get_map().get_spawn_points():
+            if sp:
+                msg = Vector3()
+                msg.x = sp.location.x
+                msg.y = sp.location.y
+                msg.z = sp.location.z
+                spawn_points.append(msg)
+        response.spawn_points = spawn_points
         return response
 
     def on_weather_changed(self, weather_parameters):
