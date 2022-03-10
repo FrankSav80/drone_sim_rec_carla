@@ -33,7 +33,7 @@ from carla_ros_bridge.debug_helper import DebugHelper
 from carla_ros_bridge.ego_vehicle import EgoVehicle
 from carla_ros_bridge.world_info import WorldInfo
 
-from carla_msgs.msg import CarlaControl, CarlaWeatherParameters
+from carla_msgs.msg import CarlaControl, CarlaWeatherParameters, CarlaSpawnPoint
 from carla_msgs.srv import SpawnObject, DestroyObject, GetBlueprints, SpawnPoints
 from rosgraph_msgs.msg import Clock
 
@@ -208,11 +208,11 @@ class CarlaRosBridge(CompatibleNode):
         spawn_points = []
         for sp in self.carla_world.get_map().get_spawn_points():
             if sp:
-                msg = Vector3()
-                msg.x = sp.location.x
-                msg.y = sp.location.y
-                msg.z = sp.location.z
+                msg = CarlaSpawnPoint()
+                msg.location_xyz = [sp.location.x, sp.location.y, sp.location.z]
+                msg.rotation_rpy = [sp.rotation.roll, sp.rotation.pitch, sp.rotation.yaw]
                 spawn_points.append(msg)
+
         response.spawn_points = spawn_points
         return response
 
