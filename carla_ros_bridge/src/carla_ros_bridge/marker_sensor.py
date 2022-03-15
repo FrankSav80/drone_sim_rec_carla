@@ -9,6 +9,7 @@
 handle a marker sensor
 """
 
+import time
 import itertools
 
 import carla
@@ -21,6 +22,8 @@ from carla_common.transforms import carla_location_to_ros_point, carla_rotation_
 
 from std_msgs.msg import ColorRGBA
 from visualization_msgs.msg import MarkerArray, Marker
+
+PUB_PERIOD_STATIC = 5 # this message is huge, so let's reduce the needed bandwidth
 
 # Using colors from CityScapesPalette specified here:
 # https://carla.readthedocs.io/en/latest/ref_sensors/#semantic-segmentation-camera
@@ -95,6 +98,9 @@ class MarkerSensor(PseudoActor):
 
         static_markers = self._get_static_markers(OBJECT_LABELS.keys())
         if static_markers:
+            self.last_pub = time.time()
+            self.period = PUB_PERIOD_STATIC
+            self.static_markers = static_markers
             self.static_marker_publisher.publish(static_markers)
 
     def destroy(self):
@@ -153,3 +159,8 @@ class MarkerSensor(PseudoActor):
             if isinstance(actor, TrafficParticipant):
                 marker_array_msg.markers.append(actor.get_marker(timestamp))
         self.marker_publisher.publish(marker_array_msg)
+
+        if self.static_markers:
+            if time.time() > (self.last_pub+self.period):
+                self.last_pub = time.time()
+                self.static_marker_publisher.publish(self.static_markers)
