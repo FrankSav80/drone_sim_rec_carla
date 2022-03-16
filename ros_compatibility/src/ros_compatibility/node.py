@@ -113,6 +113,7 @@ if ROS_VERSION == 1:
 elif ROS_VERSION == 2:
 
     import time
+    import rclpy
     from rclpy import Parameter
     from rclpy.node import Node
     from rclpy.task import Future
@@ -148,7 +149,7 @@ elif ROS_VERSION == 2:
                 Parameter(name, value=alternative_value)).value
 
         def get_time(self):
-            t = self.get_clock().now()
+            t = rclpy.clock.Clock().now()
             t = t.seconds_nanoseconds()
             return float(t[0] + (t[1] / 10**9))
 

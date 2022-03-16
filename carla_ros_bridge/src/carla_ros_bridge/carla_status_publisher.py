@@ -48,6 +48,7 @@ class CarlaStatusPublisher(object):
 
         """
         status_msg = CarlaStatus()
+        status_msg.header.stamp = roscomp.ros_timestamp(sec=self.node.get_time(), from_sec=True)
         status_msg.frame = self.frame
         status_msg.synchronous_mode = self.synchronous_mode
         status_msg.synchronous_mode_running = self.synchronous_mode_running
