@@ -49,7 +49,7 @@ OBJECT_LABELS = {
     carla.CityObjectLabel.TrafficLight: ColorRGBA(r=250.0/255.0, g=170.0/255.0, b=30.0/255.0, a=0.8),
     #carla.CityObjectLabel.Static: ColorRGBA(r=110.0/255.0, g=190.0/255.0, b=160.0/255.0, a=0.8),
     #carla.CityObjectLabel.Dynamic: ColorRGBA(r=170.0/255.0, g=120.0/255.0, b=50.0/255.0, a=0.8),
-    #carla.CityObjectLabel.Water: ColorRGBA(r=45.0/255.0, g=60.0/255.0, b=150.0/255.0, a=0.8),
+    carla.CityObjectLabel.Water: ColorRGBA(r=45.0/255.0, g=60.0/255.0, b=150.0/255.0, a=0.8),
     #carla.CityObjectLabel.Terrain: ColorRGBA(r=145.0/255.0, g=170.0/255.0, b=100.0/255.0, a=0.8),
 }
 
@@ -121,7 +121,7 @@ class MarkerSensor(PseudoActor):
         """
         return "sensor.pseudo.markers"
 
-    def _get_marker_from_environment_object(self, environment_object):
+    def _get_marker_from_environment_object(self, environment_object, label=""):
         marker = Marker(header=self.get_msg_header(frame_id="map"))
         marker.ns = str(environment_object.type)
         marker.id = next(self.static_id_gen)
@@ -133,6 +133,7 @@ class MarkerSensor(PseudoActor):
         marker.scale.y = max(0.1, 2*box.extent.y)
         marker.scale.z = max(0.1, 2*box.extent.z)
         marker.type = Marker.CUBE
+        marker.text = label
 
         marker.color = OBJECT_LABELS.get(environment_object.type, ColorRGBA(r=1.0, g=0.0, b=0.0, a=0.8))
         return marker
@@ -142,7 +143,7 @@ class MarkerSensor(PseudoActor):
         for object_type in object_types:
             objects = self.world.get_environment_objects(object_type)
             for obj in objects:
-                marker = self._get_marker_from_environment_object(obj)
+                marker = self._get_marker_from_environment_object(obj, label=str(object_type))
                 static_markers.markers.append(marker)
 
         return static_markers
