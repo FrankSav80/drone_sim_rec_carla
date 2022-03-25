@@ -209,7 +209,7 @@ class CarlaRosBridge(CompatibleNode):
         for sp in self.carla_world.get_map().get_spawn_points():
             if sp:
                 msg = CarlaSpawnPoint()
-                msg.location_xyz = [sp.location.x, sp.location.y, sp.location.z]
+                msg.location_xyz = [sp.location.x, -sp.location.y, sp.location.z]
                 msg.rotation_rpy = [sp.rotation.roll, sp.rotation.pitch, sp.rotation.yaw]
                 spawn_points.append(msg)
 
