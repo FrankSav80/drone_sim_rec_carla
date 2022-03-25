@@ -23,6 +23,8 @@ from threading import Thread, Lock, Event
 
 import carla
 
+import carla_common.transforms as trans
+
 import ros_compatibility as roscomp
 from ros_compatibility.node import CompatibleNode
 
@@ -35,6 +37,7 @@ from carla_ros_bridge.world_info import WorldInfo
 
 from carla_msgs.msg import CarlaControl, CarlaWeatherParameters, CarlaSpawnPoint
 from carla_msgs.srv import SpawnObject, DestroyObject, GetBlueprints, SpawnPoints
+from carla_waypoint_types.srv import GetWaypoint
 from rosgraph_msgs.msg import Clock
 
 from geometry_msgs.msg import Vector3
@@ -160,6 +163,9 @@ class CarlaRosBridge(CompatibleNode):
         self.get_spawn_points_service = self.new_service(SpawnPoints, "/carla/get_spawn_points",
                                                          self.get_spawn_points, callback_group=self.callback_group)
 
+        self.get_waypoint_service = self.new_service(GetWaypoint,'/carla/get_waypoint', 
+                                                     self.get_waypoint, callback_group=self.callback_group)
+
         self.carla_weather_subscriber = \
             self.new_subscription(CarlaWeatherParameters, "/carla/weather_control",
                                   self.on_weather_changed, qos_profile=10, callback_group=self.callback_group)
@@ -214,6 +220,25 @@ class CarlaRosBridge(CompatibleNode):
                 spawn_points.append(msg)
 
         response.spawn_points = spawn_points
+        return response
+
+    def get_waypoint(self, req, response=None):
+        """
+        Get the waypoint for a location
+        """
+        carla_position = carla.Location()
+        carla_position.x = req.location.x
+        carla_position.y = -req.location.y
+        carla_position.z = req.location.z
+
+        carla_waypoint = self.carla_world.get_map().get_waypoint(carla_position)
+
+        response = roscomp.get_service_response(GetWaypoint)
+        response.waypoint.pose = trans.carla_transform_to_ros_pose(carla_waypoint.transform)
+        response.waypoint.is_junction = carla_waypoint.is_junction
+        response.waypoint.road_id = carla_waypoint.road_id
+        response.waypoint.section_id = carla_waypoint.section_id
+        response.waypoint.lane_id = carla_waypoint.lane_id
         return response
 
     def on_weather_changed(self, weather_parameters):
