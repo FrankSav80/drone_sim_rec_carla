@@ -134,6 +134,7 @@ class TrafficParticipant(Actor):
         marker.color = self.get_marker_color()
         marker.color.a = 0.3
         marker.id = self.get_id()
+        marker.text = self.name
         marker.type = Marker.CUBE
 
         marker.pose = self.get_marker_pose()
