@@ -7,6 +7,8 @@
 Classes to handle Carla imu sensor
 """
 
+import numpy as np
+
 from transforms3d.euler import euler2quat
 
 import carla_common.transforms as trans
@@ -51,6 +53,10 @@ class ImuSensor(Sensor):
 
         self.imu_publisher = node.new_publisher(Imu, self.get_topic_prefix(), qos_profile=10)
         self.listen()
+        self.previous_time = None
+        self.previous_att = None
+        self.sensor_attributes = carla_actor.attributes
+        self.rs = np.random.RandomState(int(self.sensor_attributes['noise_seed']))
 
     def destroy(self):
         super(ImuSensor, self).destroy()
@@ -64,25 +70,50 @@ class ImuSensor(Sensor):
         :param carla_imu_measurement: carla imu measurement object
         :type carla_imu_measurement: carla.IMUMeasurement
         """
+        gyro_noise_x = self.rs.normal(loc=float(self.sensor_attributes['noise_gyro_bias_x']), 
+                                      scale=float(self.sensor_attributes['noise_gyro_stddev_x']))
+        gyro_noise_y = self.rs.normal(loc=float(self.sensor_attributes['noise_gyro_bias_y']), 
+                                      scale=float(self.sensor_attributes['noise_gyro_stddev_y']))
+        gyro_noise_z = self.rs.normal(loc=float(self.sensor_attributes['noise_gyro_bias_z']), 
+                                      scale=float(self.sensor_attributes['noise_gyro_stddev_z']))
         imu_msg = Imu()
         imu_msg.header = self.get_msg_header(timestamp=carla_imu_measurement.timestamp)
 
         # Carla uses a left-handed coordinate convention (X forward, Y right, Z up).
         # Here, these measurements are converted to the right-handed ROS convention
         #  (X forward, Y left, Z up).
-        imu_msg.angular_velocity.x = -carla_imu_measurement.gyroscope.x
-        imu_msg.angular_velocity.y = carla_imu_measurement.gyroscope.y
-        imu_msg.angular_velocity.z = -carla_imu_measurement.gyroscope.z
-
-        imu_msg.linear_acceleration.x = carla_imu_measurement.accelerometer.x
-        imu_msg.linear_acceleration.y = -carla_imu_measurement.accelerometer.y
-        imu_msg.linear_acceleration.z = carla_imu_measurement.accelerometer.z
-
         roll, pitch, yaw = trans.carla_rotation_to_RPY(carla_imu_measurement.transform.rotation)
         quat = euler2quat(roll, pitch, yaw)
         imu_msg.orientation.w = quat[0]
         imu_msg.orientation.x = quat[1]
         imu_msg.orientation.y = quat[2]
         imu_msg.orientation.z = quat[3]
+
+        if not self.previous_time:
+            imu_msg.linear_acceleration.x = 0.0
+            imu_msg.linear_acceleration.y = 0.0
+            imu_msg.linear_acceleration.z = 0.0
+            imu_msg.angular_velocity.x = 0.0
+            imu_msg.angular_velocity.y = 0.0
+            imu_msg.angular_velocity.z = 0.0
+            self.previous_time = carla_imu_measurement.timestamp
+            self.previous_att = roll, pitch, yaw
+            # self.previous_pos = trans.carla_location_to_ros_point(carla_imu_measurement.transform.location)
+        else:
+            dt = carla_imu_measurement.timestamp - self.previous_time
+            imu_msg.linear_acceleration.x = carla_imu_measurement.accelerometer.x
+            imu_msg.linear_acceleration.y = -carla_imu_measurement.accelerometer.y
+            imu_msg.linear_acceleration.z = carla_imu_measurement.accelerometer.z
+            imu_msg.linear_acceleration_covariance = [float(self.sensor_attributes['noise_accel_stddev_x']), 0.0, 0.0, 
+                                                      0.0, float(self.sensor_attributes['noise_accel_stddev_y']), 0.0, 
+                                                      0.0, 0.0, float(self.sensor_attributes['noise_accel_stddev_z'])]
+            imu_msg.angular_velocity.x = gyro_noise_x + (self.previous_att[0] - roll)/dt #-carla_imu_measurement.gyroscope.x
+            imu_msg.angular_velocity.y = gyro_noise_y + (self.previous_att[1] - pitch)/dt #carla_imu_measurement.gyroscope.y
+            imu_msg.angular_velocity.z = gyro_noise_z + (self.previous_att[2] - yaw)/dt #-carla_imu_measurement.gyroscope.z
+            imu_msg.angular_velocity_covariance = [float(self.sensor_attributes['noise_gyro_stddev_x']), 0.0, 0.0, 
+                                                   0.0, float(self.sensor_attributes['noise_gyro_stddev_y']), 0.0, 
+                                                   0.0, 0.0, float(self.sensor_attributes['noise_gyro_stddev_z'])]
+            self.previous_time = carla_imu_measurement.timestamp
+            self.previous_att = roll, pitch, yaw
 
         self.imu_publisher.publish(imu_msg)
