@@ -62,7 +62,7 @@ if(${ROS_VERSION} EQUAL 1)
 
   foreach(MSG_FILE ${MSG_FILES})
     execute_process(
-      COMMAND /bin/bash -c "sed -i 's/builtin_interfaces\/Time/std_msgs\/Time/g' msg/${MSG_FILE}"
+      COMMAND /bin/bash -c "sed -i 's|builtin_interfaces/Time|std_msgs/Time|g' msg/${MSG_FILE}"
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )
   endforeach()
