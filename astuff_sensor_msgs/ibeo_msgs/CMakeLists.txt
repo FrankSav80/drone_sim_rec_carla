@@ -3,6 +3,7 @@ project(ibeo_msgs)
 find_package(ros_environment REQUIRED)
 
 set(ROS_VERSION $ENV{ROS_VERSION})
+message(STATUS "Using ROS version: ${ROS_VERSION}")
 
 set(MSG_FILES
   "CameraImage.msg"
