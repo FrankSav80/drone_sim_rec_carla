@@ -1,7 +1,7 @@
 std_msgs/Header header
 
 ibeo_msgs/IbeoDataHeader ibeo_header
-builtin_interfaces/Time scan_start_time
+std_msgs/Time scan_start_time
 uint8 scan_end_time_offset
 bool fused_scan
 uint8 mirror_side
