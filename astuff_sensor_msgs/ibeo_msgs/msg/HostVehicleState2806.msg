@@ -1,7 +1,7 @@
 std_msgs/Header header
 
 ibeo_msgs/IbeoDataHeader ibeo_header
-builtin_interfaces/Time timestamp
+std_msgs/Time timestamp
 int32 distance_x
 int32 distance_y
 float32 course_angle

@@ -1,6 +1,6 @@
 uint16 id
 uint32 age
-builtin_interfaces/Time timestamp
+std_msgs/Time timestamp
 uint16 hidden_status_age
 uint8 classification
 uint8 classification_certainty

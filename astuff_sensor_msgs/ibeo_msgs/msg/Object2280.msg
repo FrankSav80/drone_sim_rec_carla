@@ -3,7 +3,7 @@ uint8 tracking_model
 bool mobility_of_dyn_object_detected
 bool motion_model_validated
 uint32 object_age
-builtin_interfaces/Time timestamp
+std_msgs/Time timestamp
 uint16 object_prediction_age
 uint8 classification
 uint8 classification_certainty

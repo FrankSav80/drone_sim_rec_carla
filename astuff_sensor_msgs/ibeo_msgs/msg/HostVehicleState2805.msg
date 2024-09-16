@@ -1,7 +1,7 @@
 std_msgs/Header header
 
 ibeo_msgs/IbeoDataHeader ibeo_header
-builtin_interfaces/Time timestamp
+std_msgs/Time timestamp
 uint16 scan_number
 uint16 error_flags
 float64 longitudinal_velocity

@@ -3,7 +3,7 @@ std_msgs/Header header
 ibeo_msgs/IbeoDataHeader ibeo_header
 uint16 image_format
 uint32 us_since_power_on
-builtin_interfaces/Time timestamp
+std_msgs/Time timestamp
 uint8 device_id
 ibeo_msgs/MountingPositionF mounting_position
 float64 horizontal_opening_angle
