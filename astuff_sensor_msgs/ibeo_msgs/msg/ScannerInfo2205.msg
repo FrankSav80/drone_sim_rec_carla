@@ -3,10 +3,10 @@ uint8 scanner_type
 uint16 scan_number
 float32 start_angle
 float32 end_angle
-builtin_interfaces/Time scan_start_time
-builtin_interfaces/Time scan_end_time
-builtin_interfaces/Time scan_start_time_from_device
-builtin_interfaces/Time scan_end_time_from_device
+std_msgs/Time scan_start_time
+std_msgs/Time scan_end_time
+std_msgs/Time scan_start_time_from_device
+std_msgs/Time scan_end_time_from_device
 float32 scan_frequency
 float32 beam_tilt
 uint32 scan_flags
