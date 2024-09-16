@@ -16,8 +16,8 @@ int16 mounting_position_x
 int16 mounting_position_y
 int16 mounting_position_z
 uint8 device_id
-builtin_interfaces/Time scan_start_time
-builtin_interfaces/Time scan_end_time
+std_msgs/Time scan_start_time
+std_msgs/Time scan_end_time
 int16 start_angle_ticks
 int16 end_angle_ticks
 uint8 mirror_side
