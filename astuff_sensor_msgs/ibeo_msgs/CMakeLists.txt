@@ -61,7 +61,6 @@ if(${ROS_VERSION} EQUAL 1)
     std_msgs
   )
 
-
   add_message_files(FILES
     ${MSG_FILES}
     DIRECTORY msg
@@ -70,7 +69,7 @@ if(${ROS_VERSION} EQUAL 1)
   generate_messages(DEPENDENCIES std_msgs)
 
   catkin_package(
-    CATKIN_DEPENDS message_runtime
+    CATKIN_DEPENDS message_runtime std_msgs
   )
 
 elseif(${ROS_VERSION} EQUAL 2)
