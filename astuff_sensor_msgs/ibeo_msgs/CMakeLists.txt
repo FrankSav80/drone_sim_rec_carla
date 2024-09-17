@@ -69,7 +69,7 @@ if(${ROS_VERSION} EQUAL 1)
   generate_messages(DEPENDENCIES std_msgs)
 
   catkin_package(
-    CATKIN_DEPENDS message_runtime std_msgs
+    CATKIN_DEPENDS message_runtime
   )
 
 elseif(${ROS_VERSION} EQUAL 2)
