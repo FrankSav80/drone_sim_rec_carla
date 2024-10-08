@@ -18,6 +18,7 @@ finally ask for a random one to the spawn service.
 import json
 import math
 import os
+import random  # aggiunto per il seed
 
 from transforms3d.euler import euler2quat
 
@@ -26,7 +27,7 @@ from ros_compatibility.exceptions import *
 from ros_compatibility.node import CompatibleNode
 
 from carla_msgs.msg import CarlaActorList
-from carla_msgs.srv import SpawnObject, DestroyObject
+from carla_msgs.srv import SpawnObject, DestroyObject, GetBlueprints  # aggiunto GetBlueprints
 from diagnostic_msgs.msg import KeyValue
 from geometry_msgs.msg import Pose
 
@@ -52,6 +53,11 @@ class CarlaSpawnObjects(CompatibleNode):
         self.players = []
         self.vehicles_sensors = []
         self.global_sensors = []
+        self.spawned_actors = [] # aggiunto per tenere traccia degli attori spawnati con blueprint
+
+        # aggiunto chiamata per inizializzare il seed
+        seed_value = rospy.get_param('~seed', 42)
+        random.seed(seed_value)
 
         self.spawn_object_service = self.new_client(SpawnObject, "/carla/spawn_object")
         self.destroy_object_service = self.new_client(DestroyObject, "/carla/destroy_object")
@@ -116,6 +122,84 @@ class CarlaSpawnObjects(CompatibleNode):
 
         self.setup_vehicles(vehicles)
         self.loginfo("All objects spawned.")
+        
+        # aggiungo qui la chiamata per spawnare attori con blueprints
+        self.spawn_actors_with_blueprints()
+
+    # Da qui aggiungo funzioni per blueprint
+    def spawn_actors_with_blueprints(self):
+        # Ottieni i blueprint di veicoli e pedoni disponibili
+        vehicle_blueprints, walker_blueprints = self.get_blueprints()
+
+        # Elenco veicoli: includiamo auto, camion, moto
+        vehicles = [v for v in vehicle_blueprints if "vehicle" in v]
+        pedestrians = [w for w in walker_blueprints if "walker" in w]
+
+        rospy.loginfo(f'Veicoli disponibili: {vehicles}')
+        rospy.loginfo(f'Pedoni disponibili: {pedestrians}')
+
+        # Chiedi l'input per la scelta degli attori da spawnare
+        num_vehicles = rospy.get_param('~num_vehicles', 5)
+        num_walkers = rospy.get_param('~num_walkers', 10)
+
+        # Spawn di veicoli
+        for i in range(num_vehicles):
+            vehicle = random.choice(vehicles)
+            pose = self.generate_random_pose()
+            self.spawn_actor(vehicle, f'vehicle_{i:03d}', pose)
+
+        # Spawn di pedoni
+        for i in range(num_walkers):
+            walker = random.choice(pedestrians)
+            pose = self.generate_random_pose()
+            self.spawn_actor(walker, f'walker_{i:03d}', pose)
+
+    def get_blueprints(self):
+        # Chiamata ai servizi per ottenere i blueprint
+        vehicle_blueprints = self.call_service(GetBlueprints, "/carla/get_blueprints_vehicle", GetBlueprints.Request())
+        walker_blueprints = self.call_service(GetBlueprints, "/carla/get_blueprints_walker", GetBlueprints.Request())
+        return vehicle_blueprints.blueprints, walker_blueprints.blueprints
+
+    def generate_random_pose(self):
+        pose = Pose()
+        pose.position.x = random.uniform(-100, 100)
+        pose.position.y = random.uniform(-100, 100)
+        pose.position.z = 0.2  # Altezza pedoni/veicoli
+        pose.orientation.w = 1.0
+        return pose
+
+    def spawn_actor(self, actor_type, actor_id, pose):
+        # Chiamata al servizio per spawnare gli attori
+        request = SpawnObject.Request()
+        request.type = actor_type
+        request.id = actor_id
+        request.transform = pose
+        response = self.call_service(SpawnObject, "/carla/spawn_object", request)
+        if response.id == -1:
+            rospy.logwarn(f"Errore nello spawn dell'attore {actor_type}: {response.error_string}")
+        else:
+            rospy.loginfo(f"{actor_type} spawnato con ID {response.id}")
+            self.spawned_actors.append(response.id)
+
+    def call_service(self, service, path, request):
+        rospy.wait_for_service(path)
+        try:
+            client = rospy.ServiceProxy(path, service)
+            response = client(request)
+            return response
+        except rospy.ServiceException as e:
+            rospy.logerr(f"Errore nella chiamata del servizio {path}: {e}")
+            return None
+
+    def destroy_actors(self):
+        # Distruggi gli attori spawnati con blueprint
+        for actor_id in self.spawned_actors:
+            request = DestroyObject.Request()
+            request.id = actor_id
+            response = self.call_service(DestroyObject, "/carla/destroy_object", request)
+            rospy.loginfo(f"Attore {actor_id} distrutto")
+
+    # finito di aggiungere funzioni per blueprint
 
     def setup_vehicles(self, vehicles):
         for vehicle in vehicles:
@@ -337,6 +421,10 @@ class CarlaSpawnObjects(CompatibleNode):
                                   destroy_object_request, timeout=0.5, spin_until_response_received=True)
                 self.loginfo("Object {} successfully destroyed.".format(player_id))
             self.players = []
+            
+            # aggiunto per destroy attori blueprint
+            self.destroy_actors()
+            
         except ServiceException:
             self.logwarn(
                 'Could not call destroy service on objects, the ros bridge is probably already shutdown')
