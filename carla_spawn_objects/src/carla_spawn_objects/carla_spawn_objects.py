@@ -1,20 +1,11 @@
 #!/usr/bin/env python
-#
-# Copyright (c) 2019-2020 Intel Corporation
-#
-# This work is licensed under the terms of the MIT license.
-# For a copy, see <https://opensource.org/licenses/MIT>.
 """
 base class for spawning objects (carla actors and pseudo_actors) in ROS
-
 Gets config file from ros parameter ~objects_definition_file and spawns corresponding objects
 through ROS service /carla/spawn_object.
-
 Looks for an initial spawn point first in the launchfile, then in the config file, and
 finally ask for a random one to the spawn service.
-
 """
-
 import json
 import math
 import os
@@ -29,11 +20,6 @@ from carla_msgs.msg import CarlaActorList
 from carla_msgs.srv import SpawnObject, DestroyObject
 from diagnostic_msgs.msg import KeyValue
 from geometry_msgs.msg import Pose
-
-# ==============================================================================
-# -- CarlaSpawnObjects ------------------------------------------------------------
-# ==============================================================================
-
 
 class CarlaSpawnObjects(CompatibleNode):
 
@@ -72,9 +58,7 @@ class CarlaSpawnObjects(CompatibleNode):
     def spawn_objects(self):
         """
         Spawns the objects
-
         Either at a given spawnpoint or at a random Carla spawnpoint
-
         :return:
         """
         # Read sensors from file
@@ -341,11 +325,6 @@ class CarlaSpawnObjects(CompatibleNode):
             self.logwarn(
                 'Could not call destroy service on objects, the ros bridge is probably already shutdown')
 
-# ==============================================================================
-# -- main() --------------------------------------------------------------------
-# ==============================================================================
-
-
 def main(args=None):
     """
     main function
@@ -372,7 +351,6 @@ def main(args=None):
             roscomp.logfatal("Exception caught: {}".format(e))
         finally:
             roscomp.shutdown()
-
 
 if __name__ == '__main__':
     main()
