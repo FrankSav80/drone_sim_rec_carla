@@ -6,10 +6,14 @@
     as many spawn_point as vehicles defined in objects_definition_file-->
   <arg name="spawn_point_ego_vehicle" default=""/>
   <arg name="spawn_sensors_only" default="false"/>
+  <arg name="num_vehicles" default="5" /> <!-- Valore di default: 5 veicoli -->
+  <arg name="num_walkers" default="10" /> <!-- Valore di default: 10 pedoni -->
 
   <node pkg="carla_spawn_objects" type="carla_spawn_objects.py" name="$(anon carla_spawn_objects)" output="screen">
     <param name="objects_definition_file" value="$(arg objects_definition_file)" />
     <param name="spawn_point_ego_vehicle" value="$(arg spawn_point_ego_vehicle)" />
     <param name="spawn_sensors_only" value="$(arg spawn_sensors_only)" />
+    <param name="num_vehicles" value="$(arg num_vehicles)" />
+    <param name="num_walkers" value="$(arg num_walkers)" />
   </node>
 </launch>
