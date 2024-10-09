@@ -29,7 +29,7 @@ from ros_compatibility.exceptions import *
 from ros_compatibility.node import CompatibleNode
 
 from carla_msgs.msg import CarlaActorList
-from carla_msgs.srv import SpawnObject, DestroyObject, GetBlueprints  # aggiunto GetBlueprints
+from carla_msgs.srv import SpawnObject, DestroyObject, GetBlueprints # aggiunto GetBlueprints
 from diagnostic_msgs.msg import KeyValue
 from geometry_msgs.msg import Pose
 
@@ -199,7 +199,7 @@ class CarlaSpawnObjects(CompatibleNode):
         else:
             rospy.loginfo(f"{actor_type} spawnato con ID {response.id}")
             self.spawned_actors.append(response.id)
-
+    """
     def call_service(self, service, path, request):
         rospy.wait_for_service(path)
         try:
@@ -215,7 +215,7 @@ class CarlaSpawnObjects(CompatibleNode):
         except Exception as e:
             rospy.logerr(f"Errore generico nella chiamata del servizio {path}: {e}")
             return None    
-
+    """
     def destroy_actors(self):
         # Distruggi gli attori spawnati con blueprint
         for actor_id in self.spawned_actors:
