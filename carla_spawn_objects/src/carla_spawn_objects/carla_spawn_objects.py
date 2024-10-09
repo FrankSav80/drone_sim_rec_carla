@@ -18,6 +18,8 @@ finally ask for a random one to the spawn service.
 import json
 import math
 import os
+
+import rospy   # aggiunto
 import random  # aggiunto per il seed
 
 from transforms3d.euler import euler2quat
@@ -146,8 +148,8 @@ class CarlaSpawnObjects(CompatibleNode):
         rospy.loginfo(f'Pedoni disponibili: {pedestrians}')
 
         # Chiedi l'input per la scelta degli attori da spawnare
-        num_vehicles = rospy.get_param('~num_vehicles', 5)
-        num_walkers = rospy.get_param('~num_walkers', 10)
+        num_vehicles = max(0, rospy.get_param('~num_vehicles', 5))
+        num_walkers = max(0, rospy.get_param('~num_walkers', 10))
 
         # Spawn di veicoli
         for i in range(num_vehicles):
@@ -169,10 +171,20 @@ class CarlaSpawnObjects(CompatibleNode):
 
     def generate_random_pose(self):
         pose = Pose()
-        pose.position.x = random.uniform(-100, 100)
-        pose.position.y = random.uniform(-100, 100)
+        pose.position.x = random.uniform(50, 150)
+        pose.position.y = random.uniform(-110, -10)
         pose.position.z = 0.2  # Altezza pedoni/veicoli
-        pose.orientation.w = 1.0
+        
+        # Rotazione casuale attorno all'asse Z (0-360 gradi)
+        yaw = random.uniform(0, 2 * math.pi)  # Rotazione in radianti tra 0 e 2*pi
+
+        # Converti la rotazione in quaternione
+        quat = quaternion_from_euler(0, 0, yaw)  # Rotazione solo sull'asse Z
+        pose.orientation.x = quat[0]
+        pose.orientation.y = quat[1]
+        pose.orientation.z = quat[2]
+        pose.orientation.w = quat[3]
+        
         return pose
 
     def spawn_actor(self, actor_type, actor_id, pose):
@@ -193,10 +205,16 @@ class CarlaSpawnObjects(CompatibleNode):
         try:
             client = rospy.ServiceProxy(path, service)
             response = client(request)
+            if not response:  # Controllo per risposta None o vuota
+                rospy.logerr(f"Nessuna risposta dal servizio {path}")
+                return None
             return response
         except rospy.ServiceException as e:
             rospy.logerr(f"Errore nella chiamata del servizio {path}: {e}")
             return None
+        except Exception as e:
+            rospy.logerr(f"Errore generico nella chiamata del servizio {path}: {e}")
+            return None    
 
     def destroy_actors(self):
         # Distruggi gli attori spawnati con blueprint
