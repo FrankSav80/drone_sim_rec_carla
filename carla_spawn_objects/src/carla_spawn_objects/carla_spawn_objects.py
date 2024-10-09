@@ -49,6 +49,13 @@ class CarlaSpawnObjects(CompatibleNode):
 
         self.objects_definition_file = self.get_param('objects_definition_file', '')
         self.spawn_sensors_only = self.get_param('spawn_sensors_only', False)
+        
+        # Recupera i parametri dal file launch
+        self.num_vehicles = rospy.get_param('~num_vehicles', 5)  # Valore di default 5 se non specificato
+        self.num_walkers = rospy.get_param('~num_walkers', 10)  # Valore di default 10 se non specificato
+
+        rospy.loginfo(f"Numero di veicoli da spawnare: {self.num_vehicles}")
+        rospy.loginfo(f"Numero di pedoni da spawnare: {self.num_walkers}")
 
         self.players = []
         self.vehicles_sensors = []
