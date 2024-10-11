@@ -263,6 +263,7 @@ class CarlaSpawnObjects(CompatibleNode):
         
             except rospy.ServiceException as e:
                 rospy.logerr(f"Errore durante la chiamata del servizio di distruzione per l'attore {actor_id}: {e}")
+        self.spawned_actors = []        
 
     # finito di aggiungere funzioni per blueprint
 
