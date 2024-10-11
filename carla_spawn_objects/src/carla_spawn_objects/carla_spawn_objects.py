@@ -165,9 +165,29 @@ class CarlaSpawnObjects(CompatibleNode):
 
     def get_blueprints(self):
         # Chiamata ai servizi per ottenere i blueprint
-        vehicle_blueprints = self.call_service(GetBlueprints, "/carla/get_blueprints_vehicle", GetBlueprints.Request())
-        walker_blueprints = self.call_service(GetBlueprints, "/carla/get_blueprints_walker", GetBlueprints.Request())
-        return vehicle_blueprints.blueprints, walker_blueprints.blueprints
+        rospy.wait_for_service("/carla/get_blueprints")
+        try:
+            get_blueprints_service = rospy.ServiceProxy('/carla/get_blueprints', GetBlueprints)
+        
+            vehicle_request = GetBlueprints()
+            vehicle_request.filter = "vehicle.*"
+
+            walker_request = GetBlueprints()
+            walker_request.filter = "walker.*"
+
+            rospy.loginfo("Chiamando il servizio per ottenere i blueprint dei veicoli...")
+            vehicle_response = get_blueprints_service(vehicle_request.filter)
+            rospy.loginfo("Blueprint veicoli ricevuti: {}".format(vehicle_response.blueprints))
+
+            rospy.loginfo("Chiamando il servizio per ottenere i blueprint dei pedoni...")
+            walker_response = get_blueprints_service(walker_request.filter)
+            rospy.loginfo("Blueprint pedoni ricevuti: {}".format(walker_response.blueprints))
+
+            return vehicle_response.blueprints, walker_response.blueprints
+
+        except rospy.ServiceException as e:
+            rospy.logerr(f"Errore durante la chiamata al servizio: {e}")
+            return [], []
 
     def generate_random_pose(self):
         pose = Pose()
@@ -179,7 +199,7 @@ class CarlaSpawnObjects(CompatibleNode):
         yaw = random.uniform(0, 2 * math.pi)  # Rotazione in radianti tra 0 e 2*pi
 
         # Converti la rotazione in quaternione
-        quat = quaternion_from_euler(0, 0, yaw)  # Rotazione solo sull'asse Z
+        quat = euler2quat(0, 0, yaw)  # Rotazione solo sull'asse Z
         pose.orientation.x = quat[0]
         pose.orientation.y = quat[1]
         pose.orientation.z = quat[2]
@@ -189,16 +209,25 @@ class CarlaSpawnObjects(CompatibleNode):
 
     def spawn_actor(self, actor_type, actor_id, pose):
         # Chiamata al servizio per spawnare gli attori
-        request = SpawnObject.Request()
+        request = SpawnObject._request_class()
         request.type = actor_type
         request.id = actor_id
         request.transform = pose
-        response = self.call_service(SpawnObject, "/carla/spawn_object", request)
-        if response.id == -1:
-            rospy.logwarn(f"Errore nello spawn dell'attore {actor_type}: {response.error_string}")
-        else:
-            rospy.loginfo(f"{actor_type} spawnato con ID {response.id}")
-            self.spawned_actors.append(response.id)
+        request.attributes = []
+        request.attach_to = 0
+        request.random_pose = False
+
+        # Creare un proxy del servizio
+        try:
+            spawn_service = rospy.ServiceProxy("/carla/spawn_object", SpawnObject)
+            response = spawn_service(request)
+            if response.id == -1:
+                rospy.logwarn(f"Errore nello spawn dell'attore {actor_type}: {response.error_string}")
+            else:
+                rospy.loginfo(f"{actor_type} spawnato con ID {response.id}")
+                self.spawned_actors.append(response.id)
+        except rospy.ServiceException as e:
+            rospy.logerr(f"Errore durante la chiamata al servizio di spawn: {e}")
     """
     def call_service(self, service, path, request):
         rospy.wait_for_service(path)
@@ -217,12 +246,23 @@ class CarlaSpawnObjects(CompatibleNode):
             return None    
     """
     def destroy_actors(self):
-        # Distruggi gli attori spawnati con blueprint
+        # Distruggi gli attori spawnati con blueprint      
+        destroy_service = rospy.ServiceProxy('/carla/destroy_object', DestroyObject)
+
         for actor_id in self.spawned_actors:
-            request = DestroyObject.Request()
-            request.id = actor_id
-            response = self.call_service(DestroyObject, "/carla/destroy_object", request)
-            rospy.loginfo(f"Attore {actor_id} distrutto")
+            try:
+                
+                request = DestroyObject._request_class()
+                request.id = actor_id
+                response = destroy_service(request)
+
+                if response:
+                    rospy.loginfo(f"Attore {actor_id} distrutto con successo")
+                else:
+                    rospy.logwarn(f"Errore nella distruzione dell'attore {actor_id}")
+        
+            except rospy.ServiceException as e:
+                rospy.logerr(f"Errore durante la chiamata del servizio di distruzione per l'attore {actor_id}: {e}")
 
     # finito di aggiungere funzioni per blueprint
 
