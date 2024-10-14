@@ -29,7 +29,7 @@ from ros_compatibility.exceptions import *
 from ros_compatibility.node import CompatibleNode
 
 from carla_msgs.msg import CarlaActorList
-from carla_msgs.srv import SpawnObject, DestroyObject, GetBlueprints # aggiunto GetBlueprints
+from carla_msgs.srv import SpawnObject, DestroyObject, GetBlueprints, SpawnPoints # aggiunto GetBlueprints
 from diagnostic_msgs.msg import KeyValue
 from geometry_msgs.msg import Pose
 
@@ -51,7 +51,7 @@ class CarlaSpawnObjects(CompatibleNode):
 
         self.objects_definition_file = self.get_param('objects_definition_file', '')
         self.spawn_sensors_only = self.get_param('spawn_sensors_only', False)
-        
+
         # Recupera i parametri dal file launch
         self.num_vehicles = rospy.get_param('~num_vehicles', 5)  # Valore di default 5 se non specificato
         self.num_walkers = rospy.get_param('~num_walkers', 10)  # Valore di default 10 se non specificato
@@ -87,9 +87,9 @@ class CarlaSpawnObjects(CompatibleNode):
     def spawn_objects(self):
         """
         Spawns the objects
-        
+
         Either at a given spawnpoint or at a random Carla spawnpoint
-        
+
         :return:
         """
         # Read sensors from file
@@ -131,7 +131,7 @@ class CarlaSpawnObjects(CompatibleNode):
 
         self.setup_vehicles(vehicles)
         self.loginfo("All objects spawned.")
-        
+
         # aggiungo qui la chiamata per spawnare attori con blueprints
         self.spawn_actors_with_blueprints()
 
@@ -151,24 +151,51 @@ class CarlaSpawnObjects(CompatibleNode):
         num_vehicles = max(0, rospy.get_param('~num_vehicles', 5))
         num_walkers = max(0, rospy.get_param('~num_walkers', 10))
 
+        # Ottieni i punti di spawn dal servizio
+        spawn_points = self.get_spawn_points()
+        if not spawn_points:
+            rospy.logerr("Nessun punto di spawn disponibile, abortito!")
+            return
+
+        # Mantieni traccia dei punti di spawn già utilizzati
+        used_spawn_points = set()
+
         # Spawn di veicoli
         for i in range(num_vehicles):
             vehicle = random.choice(vehicles)
-            pose = self.generate_random_pose()
+            pose = self.generate_random_pose(used_spawn_points, spawn_points)
+
+            if pose is None:
+                rospy.logwarn(f"Impossibile generare una posizione valida per il veicolo {vehicle} dopo vari tentativi")
+                continue  # Salta al prossimo veicolo se non riesce a trovare un punto di spawn valido
+
             self.spawn_actor(vehicle, f'vehicle_{i:03d}', pose)
 
         # Spawn di pedoni
         for i in range(num_walkers):
             walker = random.choice(pedestrians)
-            pose = self.generate_random_pose()
+            pose = self.generate_random_pose(used_spawn_points, spawn_points)
+
+            if pose is None:
+                rospy.logwarn(f"Impossibile generare una posizione valida per il pedone {walker} dopo vari tentativi")
+                continue  # Salta al prossimo veicolo se non riesce a trovare un punto di spawn valido
             self.spawn_actor(walker, f'walker_{i:03d}', pose)
+
+        '''
+        # Stampa i punti di spawn utilizzati non in ordine cronologico di utilizzo
+        rospy.loginfo("Punti di spawn utilizzati:")
+        for index, point in enumerate(used_spawn_points):
+            rospy.loginfo(f"Used Spawn Point {index + 1}: Location: {point[0:3]}, Rotation: {point[3:6]}")
+        rospy.loginfo(f"Used Spawn Point: Location: {selected_spawn_point.location_xyz}, Rotation: {selected_spawn_point.rotation_rpy}")
+        '''
+
 
     def get_blueprints(self):
         # Chiamata ai servizi per ottenere i blueprint
         rospy.wait_for_service("/carla/get_blueprints")
         try:
             get_blueprints_service = rospy.ServiceProxy('/carla/get_blueprints', GetBlueprints)
-        
+
             vehicle_request = GetBlueprints()
             vehicle_request.filter = "vehicle.*"
 
@@ -189,23 +216,55 @@ class CarlaSpawnObjects(CompatibleNode):
             rospy.logerr(f"Errore durante la chiamata al servizio: {e}")
             return [], []
 
-    def generate_random_pose(self):
-        pose = Pose()
-        pose.position.x = random.uniform(50, 150)
-        pose.position.y = random.uniform(-110, -10)
-        pose.position.z = 0.2  # Altezza pedoni/veicoli
-        
-        # Rotazione casuale attorno all'asse Z (0-360 gradi)
-        yaw = random.uniform(0, 2 * math.pi)  # Rotazione in radianti tra 0 e 2*pi
+    def generate_random_pose(self, used_spawn_points, spawn_points, max_trials=10):
+        if not spawn_points:
+            rospy.logerr("Nessun punto di spawn disponibile!")
+            return None
 
-        # Converti la rotazione in quaternione
-        quat = euler2quat(0, 0, yaw)  # Rotazione solo sull'asse Z
-        pose.orientation.x = quat[0]
-        pose.orientation.y = quat[1]
-        pose.orientation.z = quat[2]
-        pose.orientation.w = quat[3]
-        
-        return pose
+        trial = 0
+        while trial < max_trials:
+            # Seleziona casualmente uno degli spawn points predefiniti
+            selected_spawn_point = random.choice(spawn_points)
+
+            # Converti il punto di spawn in una tupla hashable (x, y, z, roll, pitch, yaw)
+            spawn_point_tuple = (selected_spawn_point.location_xyz[0],  # x
+                                 selected_spawn_point.location_xyz[1],  # y
+                                 selected_spawn_point.location_xyz[2],  # z
+                                 selected_spawn_point.rotation_rpy[0],  # roll
+                                 selected_spawn_point.rotation_rpy[1],  # pitch
+                                 selected_spawn_point.rotation_rpy[2])  # yaw
+
+            # Verifica se il punto è già stato utilizzato
+            if spawn_point_tuple not in used_spawn_points:
+                # Aggiungi il punto di spawn all'elenco di quelli utilizzati
+                used_spawn_points.add(spawn_point_tuple)
+                
+                pose = Pose()
+                pose.position.x = selected_spawn_point.location_xyz[0]
+                pose.position.y = selected_spawn_point.location_xyz[1]
+                pose.position.z = 10 # Altezza pedoni/veicoli(prima avevamo 0.2 e non riusciva a spawnare alcuni veicoli)
+
+                # Rotazione casuale attorno all'asse Z (0-360 gradi)
+                # yaw = random.uniform(0, 2 * math.pi)  # Rotazione in radianti tra 0 e 2*pi
+
+                # Converti la rotazione in quaternione
+                quat = euler2quat(0, 0, math.radians(selected_spawn_point.rotation_rpy[2]))  # Rotazione attorno all'asse Z
+                pose.orientation.w = quat[0]
+                pose.orientation.x = quat[1]
+                pose.orientation.y = quat[2]
+                pose.orientation.z = quat[3]
+
+                rospy.loginfo(f"Used Spawn Point: Location: {selected_spawn_point.location_xyz}, Rotation: {selected_spawn_point.rotation_rpy}")
+
+                rospy.loginfo(f"Generated pose: Position ({pose.position.x}, {pose.position.y}, {pose.position.z}), "
+                f"Orientation (x={pose.orientation.x}, y={pose.orientation.y}, z={pose.orientation.z}, w={pose.orientation.w})")
+
+                return pose
+
+            trial +=1
+
+        rospy.logwarn("Impossibile trovare un punto di spawn valido dopo diversi tentativi.")
+        return None
 
     def spawn_actor(self, actor_type, actor_id, pose):
         # Chiamata al servizio per spawnare gli attori
@@ -228,6 +287,27 @@ class CarlaSpawnObjects(CompatibleNode):
                 self.spawned_actors.append(response.id)
         except rospy.ServiceException as e:
             rospy.logerr(f"Errore durante la chiamata al servizio di spawn: {e}")
+
+
+
+    def get_spawn_points(self):
+        try:
+            # Crea un proxy per il servizio SpawnPoints
+            rospy.wait_for_service('/carla/get_spawn_points', timeout=5)
+            get_spawn_points_service = rospy.ServiceProxy('/carla/get_spawn_points', SpawnPoints)
+
+            # Richiedi i punti di spawn
+            avaible_spawn_points = get_spawn_points_service()
+
+            if avaible_spawn_points.spawn_points:
+                return avaible_spawn_points.spawn_points
+            else:
+                rospy.logwarn("Nessun punto di spawn disponibile dal servizio.")
+                return None
+        except rospy.ServiceException as e:
+            rospy.logerr(f"Errore nella chiamata al servizio get_spawn_points: {e}")
+            return None
+
     """
     def call_service(self, service, path, request):
         rospy.wait_for_service(path)
@@ -243,15 +323,15 @@ class CarlaSpawnObjects(CompatibleNode):
             return None
         except Exception as e:
             rospy.logerr(f"Errore generico nella chiamata del servizio {path}: {e}")
-            return None    
+            return None
     """
     def destroy_actors(self):
-        # Distruggi gli attori spawnati con blueprint      
+        # Distruggi gli attori spawnati con blueprint
         destroy_service = rospy.ServiceProxy('/carla/destroy_object', DestroyObject)
 
         for actor_id in self.spawned_actors:
             try:
-                
+
                 request = DestroyObject._request_class()
                 request.id = actor_id
                 response = destroy_service(request)
@@ -260,12 +340,14 @@ class CarlaSpawnObjects(CompatibleNode):
                     rospy.loginfo(f"Attore {actor_id} distrutto con successo")
                 else:
                     rospy.logwarn(f"Errore nella distruzione dell'attore {actor_id}")
-        
+
             except rospy.ServiceException as e:
                 rospy.logerr(f"Errore durante la chiamata del servizio di distruzione per l'attore {actor_id}: {e}")
-        self.spawned_actors = []        
+
+        self.spawned_actors = []
 
     # finito di aggiungere funzioni per blueprint
+
 
     def setup_vehicles(self, vehicles):
         for vehicle in vehicles:
@@ -487,10 +569,10 @@ class CarlaSpawnObjects(CompatibleNode):
                                   destroy_object_request, timeout=0.5, spin_until_response_received=True)
                 self.loginfo("Object {} successfully destroyed.".format(player_id))
             self.players = []
-            
+
             # aggiunto per destroy attori blueprint
             self.destroy_actors()
-            
+
         except ServiceException:
             self.logwarn(
                 'Could not call destroy service on objects, the ros bridge is probably already shutdown')
