@@ -242,7 +242,7 @@ class CarlaSpawnObjects(CompatibleNode):
                 pose = Pose()
                 pose.position.x = selected_spawn_point.location_xyz[0]
                 pose.position.y = selected_spawn_point.location_xyz[1]
-                pose.position.z = 10 # Altezza pedoni/veicoli(prima avevamo 0.2 e non riusciva a spawnare alcuni veicoli)
+                pose.position.z = 2 # Altezza pedoni/veicoli (da testare <2)
 
                 # Rotazione casuale attorno all'asse Z (0-360 gradi)
                 # yaw = random.uniform(0, 2 * math.pi)  # Rotazione in radianti tra 0 e 2*pi
