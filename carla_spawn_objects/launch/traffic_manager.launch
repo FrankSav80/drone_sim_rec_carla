@@ -1,3 +1,0 @@
-<launch>
-    <node pkg="carla_spawn_objects" type="traffic_manager.py" name="carla_traffic_manager_node" output="screen" />
-</launch>
