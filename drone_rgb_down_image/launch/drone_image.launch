@@ -1,0 +1,14 @@
+<launch>
+    <!-- Parametri per directory di salvataggio -->
+    <arg name="image_dir" default="/home/gruppo2/Progetto-MR-Savinox2/carlaLab/catkin_ws/src/ros-bridge/drone_rgb_down_image/drone_images"/>
+    <arg name="video_dir" default="/home/gruppo2/Progetto-MR-Savinox2/carlaLab/catkin_ws/src/ros-bridge/drone_rgb_down_image/drone_videos"/>
+    <arg name="record_duration" default="10"/>
+    
+    <!-- Nodo per il salvataggio delle immagini e dei video -->
+    <node pkg="drone_rgb_down_image" type="drone_image.py" name="drone_image_saver" output="screen">
+        <param name="image_dir" value="$(arg image_dir)" />
+        <param name="video_dir" value="$(arg video_dir)" />
+        <param name="frame_rate" value="10" />
+        <param name="record_duration" value="$(arg record_duration)" />
+    </node>
+</launch>
