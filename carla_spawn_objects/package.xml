@@ -9,6 +9,8 @@
 
   <exec_depend>carla_msgs</exec_depend>
   <exec_depend>ros_compatibility</exec_depend>
+  <exec_depend>std_msgs</exec_depend>   <!-- Aggiunto per traffic_manager -->
+  <exec_depend>carla</exec_depend>      <!-- Aggiunto per traffic_manager -->
 
   <!-- ROS 2 DEPENDENCIES-->
   <depend condition="$ROS_VERSION == 2">rclpy</depend>
