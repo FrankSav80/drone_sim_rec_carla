@@ -8,12 +8,13 @@ import random  # aggiunto per il seed
 class CarlaTrafficManager:
     def __init__(self, seed_value=42):
         # Connessione al server di Carla
-        self.client = carla.Client('localhost', 2000)  # Cambia 'localhost' con l'IP di Carla se necessario
+        self.client = carla.Client('carla-container.local', 2000)  # Cambia 'localhost' con l'IP di Carla se necessario
         self.client.set_timeout(10.0)
         self.world = self.client.get_world()
+        rospy.loginfo("Connessione al mondo di CARLA stabilita")
 
         # Inizializzazione del Traffic Manager
-        self.traffic_manager = self.client.get_trafficmanager(8000)  # Assicurati che questa sia la porta corretta
+        self.traffic_manager = self.client.get_trafficmanager(9000)  # Assicurati che questa sia la porta corretta
 
         # Imposta il seed per garantire la ripetibilità
         self.traffic_manager.set_random_device_seed(seed_value)
@@ -24,6 +25,7 @@ class CarlaTrafficManager:
     def manage_existing_vehicles(self):
         # Ottiene tutti gli attori presenti nel mondo
         actors = self.world.get_actors()
+        print(f"Numero totale di attori nel mondo: {len(actors)}")
 
         # Filtra solo i veicoli
         vehicles = actors.filter('vehicle.*')
@@ -45,15 +47,27 @@ class CarlaTrafficManager:
 
         # Filtra solo i pedoni e i loro controller
         pedestrians = actors.filter('walker.pedestrian.*')
-        controllers = actors.filter('controller.ai.walker')
 
-        # Collega ogni pedone al suo controller
-        for pedestrian, controller in zip(pedestrians, controllers):
+        # Spawn dei controller per ogni pedone
+        for pedestrian in pedestrians:
+
+            # Spawn del controller per il pedone
+            controller_bp = self.world.get_blueprint_library().find('controller.ai.walker')
+            controller = self.world.spawn_actor(controller_bp, carla.Transform(), attach_to=pedestrian)
+
             controller.start()
-            controller.go_to_location(self.world.get_random_location_from_navigation())
-            controller.set_max_speed(1.5)  # Velocità massima del pedone
+            target_location = self.world.get_random_location_from_navigation()
+            if target_location:  # Assicurati che la posizione di destinazione sia valida
+                controller.go_to_location(target_location)
+                controller.set_max_speed(1.5)  # Velocità massima del pedone
+            else:
+                 rospy.logwarn("Impossibile ottenere una posizione di destinazione valida per il pedone.")
 
         rospy.loginfo(f"Gestiti {len(pedestrians)} pedoni tramite il Traffic Manager.")
+
+    def update_simulation(self, event):
+        # Aggiorna la simulazione
+        self.world.tick()  # Esegui il tick del mondo per aggiornare la simulazione
 
 if __name__ == "__main__":
     rospy.init_node('carla_traffic_manager_node')
@@ -69,3 +83,5 @@ if __name__ == "__main__":
     manager.manage_existing_pedestrians()
 
     rospy.loginfo("Gestione del Traffic Manager completata.")
+
+    rospy.spin()
