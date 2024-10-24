@@ -3,7 +3,6 @@
 import rospy
 import cv2
 import os
-import time
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image
 from std_msgs.msg import Bool  # Importa il tipo di messaggio Bool
@@ -13,13 +12,13 @@ class DroneImageSaver:
     def __init__(self):
         # Inizializza il nodo ROS
         rospy.init_node('drone_image_saver', anonymous=True)
-        
+
         # Directory dove salvare immagini e video
         self.image_dir = rospy.get_param('~image_dir', '/tmp/drone_images')
         self.video_dir = rospy.get_param('~video_dir', '/tmp/drone_videos')
 
         # Frame rate per il salvataggio video
-        self.frame_rate = rospy.get_param('~frame_rate', 10)
+        self.frame_rate = rospy.get_param('~frame_rate', 20)
         self.record_duration = rospy.get_param('~record_duration', 10)
         self.bridge = CvBridge()
         self.video_writer = None
@@ -30,13 +29,13 @@ class DroneImageSaver:
             os.makedirs(self.image_dir)
         if not os.path.exists(self.video_dir):
             os.makedirs(self.video_dir)
-        
+
         # Sottoscrizione al topic della RGB Camera
         rospy.Subscriber('/carla/flying_sensor/rgb_down/image', Image, self.image_callback)
 
         # Sottoscrizione al topic per il controllo della registrazione
         rospy.Subscriber('/toggle_recording', Bool, self.toggle_video_recording)
-        
+
         # Variabili per la gestione del video
         self.recording = False
         self.start_time = None
@@ -64,15 +63,18 @@ class DroneImageSaver:
 
             self.video_writer.write(cv_image)
 
+            # Log del tempo trascorso
+            rospy.loginfo(f"Tempo trascorso: {rospy.get_time() - self.start_time} secondi")
+
             # Fermare la registrazione dopo 10 secondi (di default)
-            if time.time() - self.start_time > self.record_duration:
+            if rospy.get_time() - self.start_time > self.record_duration:
                 self.stop_video()
 
     def start_video(self, first_frame):
-        video_file = os.path.join(self.video_dir, f'video_{int(time.time())}.avi')
+        video_file = os.path.join(self.video_dir, f'video_{int(rospy.get_time())}.avi')
         height, width, _ = first_frame.shape
-        self.video_writer = cv2.VideoWriter(video_file, cv2.VideoWriter_fourcc(*'XVID'), self.frame_rate, (width, height))
-        self.start_time = time.time()
+        self.video_writer = cv2.VideoWriter(video_file, cv2.VideoWriter_fourcc(*'MJPG'), self.frame_rate, (width, height))
+        self.start_time = rospy.get_time()
         rospy.loginfo(f"Registrazione video iniziata: {video_file}")
 
     def stop_video(self):
