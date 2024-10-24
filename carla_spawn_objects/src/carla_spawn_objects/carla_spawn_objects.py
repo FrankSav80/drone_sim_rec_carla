@@ -229,10 +229,7 @@ class CarlaSpawnObjects(CompatibleNode):
             # Converti il punto di spawn in una tupla hashable (x, y, z, roll, pitch, yaw)
             spawn_point_tuple = (selected_spawn_point.location_xyz[0],  # x
                                  selected_spawn_point.location_xyz[1],  # y
-                                 selected_spawn_point.location_xyz[2],  # z
-                                 selected_spawn_point.rotation_rpy[0],  # roll
-                                 selected_spawn_point.rotation_rpy[1],  # pitch
-                                 selected_spawn_point.rotation_rpy[2])  # yaw
+                                 selected_spawn_point.location_xyz[2])  # z
 
             # Verifica se il punto è già stato utilizzato
             if spawn_point_tuple not in used_spawn_points:
@@ -242,10 +239,17 @@ class CarlaSpawnObjects(CompatibleNode):
                 pose = Pose()
                 pose.position.x = selected_spawn_point.location_xyz[0]
                 pose.position.y = selected_spawn_point.location_xyz[1]
-                pose.position.z = 2 # Altezza pedoni/veicoli (da testare <2)
+                pose.position.z = selected_spawn_point.location_xyz[2] + 2 # Altezza pedoni/veicoli (da testare <2)
 
                 # Rotazione casuale attorno all'asse Z (0-360 gradi)
                 # yaw = random.uniform(0, 2 * math.pi)  # Rotazione in radianti tra 0 e 2*pi
+
+                roll1, pitch1, yaw1 = selected_spawn_point.rotation_rpy
+
+                if (85 <= yaw1 <= 95) or (-95 <= yaw1 <= -85):
+                    yaw1 = -yaw1
+
+                selected_spawn_point.rotation_rpy = (roll1, pitch1, yaw1)
 
                 # Converti la rotazione in quaternione
                 quat = euler2quat(0, 0, math.radians(selected_spawn_point.rotation_rpy[2]))  # Rotazione attorno all'asse Z
