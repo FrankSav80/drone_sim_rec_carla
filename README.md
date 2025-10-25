@@ -1,4 +1,4 @@
-# 🚁 Drone Simulation for Dataset Acquisition (CARLA + ROS)
+# 🚁 Drone Simulation for Dataset Acquisition
 
 🎓 *University Project – Robotics 2 Course, Politecnico di Bari*
 
@@ -94,6 +94,7 @@ Master’s Degree in Automation and Robotics Engineering – Politecnico di Bari
 ## 🧠 Keywords
 
 `CARLA` • `ROS` • `Drone Simulation` • `Dataset Acquisition` • `Python` • `Docker` • `Robotics 2`
+
 
 
 
