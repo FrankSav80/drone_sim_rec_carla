@@ -1,3 +1,6 @@
+# 🚁 Elicoper Elicopter 🚁 
+
+
 # 🚁 Drone Simulation for Dataset Acquisition (CARLA + ROS)
 
 🎓 *University Project – Robotics 2 Course, Politecnico di Bari*
@@ -61,12 +64,26 @@ Captured data was used for further **computer vision and robotics applications**
 
 ## 📁 Repository Structure
 
-📦 uav_dataset_simulation  
-- scripts/ # Python control and acquisition scripts  
-- config/ # Configuration and environment setup files  
-- images/ # Captured simulation scenes (clear, foggy, rainy)  
-- docs/ # Project documentation  
-- README.md # Project overview  
+- images/ → Contains screenshots from various simulated weather conditions
+- LinkSimulations.txt → Dropbox link to videos and images of the experiments
+- docker_ws/Dockerfile.txt → Automates environment configuration
+- Weather properties.xlsx → Detailed configuration of each simulated weather condition
+- rviz_carla_RGBdown.rviz → Custom RViz configuration file
+- flying_sensor_full.json → JSON file defining CARLA sensors and objects
+
+- carla_spawn_objects/ → ROS package for spawning and managing objects in CARLA
+  - src/carla_spawn_objects/
+    - carla_spawn_objects.py → Spawns vehicles and pedestrians
+    - traffic_manager.py → Traffic Manager integration
+    - drone_image.py → Captures simulation images and videos
+  - launch/
+    - carla_spawn_objects.launch → Launches object spawning
+    - traffic_manager.launch → Launches Traffic Manager
+    - drone_image.launch → Launches image capture
+
+- carla_ros_bridge/ → Handles CARLA–ROS communication
+  - launch/carla_ros_bridge.launch
+  - src/carla_ros_bridge/bridge.py
 
 ---
 
@@ -80,4 +97,5 @@ Master’s Degree in Automation and Robotics Engineering – Politecnico di Bari
 ## 🧠 Keywords
 
 `CARLA` • `ROS` • `Drone Simulation` • `Dataset Acquisition` • `Python` • `Docker` • `Robotics 2`
+
 
