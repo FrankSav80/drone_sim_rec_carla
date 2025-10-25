@@ -1,70 +1,82 @@
-# ROS/ROS2 bridge for CARLA simulator
+# 🚁 UAV Simulation for Dataset Acquisition (CARLA + ROS)
 
-[![Actions Status](https://github.com/carla-simulator/ros-bridge/workflows/CI/badge.svg)](https://github.com/carla-simulator/ros-bridge)
-[![Documentation](https://readthedocs.org/projects/carla/badge/?version=latest)](http://carla.readthedocs.io)
-[![GitHub](https://img.shields.io/github/license/carla-simulator/ros-bridge)](https://github.com/carla-simulator/ros-bridge/blob/master/LICENSE)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/carla-simulator/ros-bridge)](https://github.com/carla-simulator/ros-bridge/releases/latest)
+🎓 *University Project – Robotics 2 Course, Politecnico di Bari*
 
- This ROS package is a bridge that enables two-way communication between ROS and CARLA. The information from the CARLA server is translated to ROS topics. In the same way, the messages sent between nodes in ROS get translated to commands to be applied in CARLA.
+A **drone-based image and video acquisition system** developed in the **CARLA simulator**, integrated with **ROS** and **Docker** for managing urban simulation environments.  
+This project explores autonomous UAV operations in complex city scenarios for repeatable dataset generation.
 
-![rviz setup](./docs/images/ad_demo.png "AD Demo")
+---
 
-**This version requires CARLA 0.9.13**
+## 🌆 Overview
 
-## Features
+The project focuses on using the **CARLA simulator** to capture **images and videos** through a **drone equipped with a downward-facing camera** flying over urban intersections.  
+By setting a fixed seed, the simulator ensures that the same scene, including vehicles and pedestrians, is **repeatable**, allowing consistent dataset generation.
 
-- Provide Sensor Data (Lidar, Semantic lidar, Cameras (depth, segmentation, rgb, dvs), GNSS, Radar, IMU)
-- Provide Object Data (Transforms (via [tf](http://wiki.ros.org/tf)), Traffic light status, Visualization markers, Collision, Lane invasion)
-- Control AD Agents (Steer/Throttle/Brake)
-- Control CARLA (Play/pause simulation, Set simulation parameters)
+<p align="center">
+  <img src="images/rondabout/clear_sunrise.jpg" alt="Clear sunrise scene" width="500">
+</p>
 
-## Getting started and documentation
+---
 
-Installation instructions and further documentation of the ROS bridge and additional packages are found [__here__](https://carla.readthedocs.io/projects/ros-bridge/en/latest/).
+## 🧰 Technologies
 
-## My modifications
-I modified this repo to allow you to use hostnames (avahi) and to allow you to download just one script to use together with a headless CARLA server from another docker image.  
-It's expected that you are running linux and you have docker and nvidia-docker2 installed (and working).
+- ![CARLA](https://img.shields.io/badge/CARLA-Simulator-lightgrey?style=flat-square&logo=unrealengine)
+- ![ROS](https://img.shields.io/badge/ROS1-Integration-blue?style=flat-square&logo=ros)
+- ![Python](https://img.shields.io/badge/Python-Scripting-yellow?style=flat-square&logo=python)
+- ![Docker](https://img.shields.io/badge/Docker-Containerization-2496ED?style=flat-square&logo=docker)
+- ![SSH](https://img.shields.io/badge/SSH-Remote%20Access-orange?style=flat-square&logo=gnu-bash)
+- ![Windows Remote Desktop](https://img.shields.io/badge/Windows-Remote%20Desktop-lightblue?style=flat-square&logo=windows)
 
-### CARLA headless server
-Download the script to launch the headless server:
-```
-$ wget https://raw.githubusercontent.com/ricardodeazambuja/carla-simulator-python/main/launch_simulator_docker.sh
-```
+---
 
-Don't forget to launch it before you try any of the examples:
-```
-$ source launch_simulator_docker.sh
-```
+## ⚙️ System Description
 
-### CARLA rosbridge container
-Download this second script for the ROS2 container:
-```
-$ wget https://raw.githubusercontent.com/ricardodeazambuja/carla-ros/master/docker/build_ros2-galactic.sh
-```
+The **simulation environment** is built using CARLA’s **Unreal Engine-based** infrastructure, which enables realistic modeling of city intersections populated by cars and pedestrians.  
+The workflow consists of several stages:
 
-Build your image (it will download the script `run_ros2-galactic.sh` after that):
-```
-$ source build_ros2-galactic.sh
-```
+1. **Environment Configuration** – Setting up urban intersections and environmental conditions.  
+2. **Scenario Population** – Using Python scripts to spawn vehicles and pedestrians.  
+3. **Drone Control** – Managing the drone’s flight path and altitude via ROS topics.  
+4. **Data Recording** – Capturing synchronized **images and videos** through ROS and Python APIs.  
 
-And finally launch the CARLA ROS2 stuff :)
-```
-$ source run_ros2-galactic.sh
-```
+<p align="center">
+  <img src="images/four_way_junction/heavy_rain_night.jpg" alt="Heavy rain night scene" width="500">
+</p>
 
-### Using it
-If everything went as expected, and you started the CARLA headless server on a different terminal, you should be able to test your container with this:
-```
-$ ros2 launch carla_ros_bridge carla_ros_bridge_with_example_ego_vehicle.launch.py
-```
+All simulation tasks were executed on a **remote server** through **SSH** and **Windows Remote Desktop**, ensuring efficient management of computation-heavy processes.
 
-When you need to open more terminals inside the same container (considering the name is `carla-ros2-8589d9bd2d`):
-```
-$ docker exec -it carla-ros2-8589d9bd2d bash
-```
+---
 
-And if you just want to execute something (e.g. `ros2 topic list`):
-```
-$ docker exec -t carla-ros2-8589d9bd2d bash -i -c "ros2 topic list"
-```
+## 🧪 Results
+
+The system allows the drone to fly autonomously across **different intersections** and **weather conditions**, enabling dataset acquisition under a wide variety of realistic scenarios.
+
+<p align="center">
+  <img src="images/five_way_junction/foggy_noon.jpg" alt="Foggy noon scene" width="500">
+</p>
+
+Captured data was used for further **computer vision and robotics applications**, such as obstacle detection, object tracking, and autonomous navigation research.
+
+---
+
+## 📁 Repository Structure
+
+📦 uav_dataset_simulation  
+- scripts/ # Python control and acquisition scripts  
+- config/ # Configuration and environment setup files  
+- images/ # Captured simulation scenes (clear, foggy, rainy)  
+- docs/ # Project documentation  
+- README.md # Project overview  
+
+---
+
+## 👥 Authors
+
+Developed by [Francesco Savino](https://github.com/FrankSav80) and [Tommaso Savino](https://github.com/ItsTomSav)  
+Master’s Degree in Automation and Robotics Engineering – Politecnico di Bari
+
+---
+
+## 🧠 Keywords
+
+`CARLA` • `ROS` • `Drone Simulation` • `Dataset Acquisition` • `Python` • `Docker` • `Robotics 2`
