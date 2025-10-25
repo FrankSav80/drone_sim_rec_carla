@@ -1,0 +1,56 @@
+FROM osrf/ros:noetic-desktop-full
+
+USER root
+
+# Aggiorna i pacchetti e installa le dipendenze di base
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
+    python3-pip \
+    python3-rosdep \
+    git \
+    wget \
+    nano
+
+# Rviz
+RUN apt install -y net-tools iputils-ping x11-apps
+
+# Workspace e working directory
+RUN mkdir -p /home/gruppo2/Progetto-MR-Savinox2/carlaLab/catkin_ws/src
+WORKDIR /home/gruppo2/Progetto-MR-Savinox2/carlaLab/catkin_ws
+
+# Clona i pacchetti ROS-bridge di CARLA per ROS 1 e il pacchetto di controllo drone
+RUN git clone https://github.com/FrankSav80/provax.git src/ros-bridge
+# RUN git clone --recurse-submodules https://github.com/ricardodeazambuja/carla-ros.git src/ros-bridge
+# RUN git clone --recurse-submodules https://github.com/ricardodeazambuja/ros2_quad_sim_python src/quad_sim_python
+RUN git clone https://github.com/FrankSav80/provay.git src/quad_sim_python
+
+# Installa Python e i requisiti necessari per CARLA e i pacchetti clonati
+RUN python3 -m pip install --upgrade pip
+RUN python3 -m pip install carla==0.9.13
+RUN python3 -m pip install -r src/ros-bridge/requirements.txt
+RUN python3 -m pip install quad_sim_python
+
+
+# Aggiorna i pacchetti e installa le dipendenze ROS
+RUN if [ ! -f /etc/ros/rosdep/sources.list.d/20-default.list ]; then rosdep init; fi && \
+    rosdep update && \
+    rosdep install --from-paths src --ignore-src -r -y
+
+# Compila il workspace ROS 1 con catkin_make 
+RUN /bin/bash -c 'source /opt/ros/noetic/setup.bash; catkin_make clean; catkin_make'
+
+# Creazione del link simbolico per Python (Assicurare che 'python' punti a 'python3')
+RUN ln -s /usr/bin/python3 /usr/bin/python
+
+# Aggiungi il setup di ROS e CARLA nel .bashrc per eseguire automaticamente il setup in ogni sessione
+RUN echo "source /opt/ros/noetic/setup.bash" >> /home/gruppo2/.bashrc
+RUN echo "source /home/gruppo2/Progetto-MR-Savinox2/carlaLab/catkin_ws/devel/setup.bash" >> /home/gruppo2/.bashrc
+
+# Aggiungi il setup per la Python API di CARLA
+RUN echo "export PYTHONPATH=\$PYTHONPATH:/home/gruppo2/.local/lib/python3.8/site-packages" >> /home/gruppo2/.bashrc
+RUN echo "export PATH=\$PATH:/home/gruppo2/.local/bin" >> /home/gruppo2/.bashrc
+
+# Imposta la directory di lavoro di default
+WORKDIR /home/gruppo2/Progetto-MR-Savinox2/carlaLab/catkin_ws
+
+# Costruisci il container
+CMD ["bash"]
